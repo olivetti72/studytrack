@@ -23,8 +23,14 @@ if st.button("生成报告"):
         os.makedirs("docs")
 
         for file in uploaded_files:
-            with open(os.path.join("docs", file.name), "wb") as f:
+            file_path = os.path.join("docs", file.name)
+            st.write(f"保存文件：{file_path}")
+            with open(file_path, "wb") as f:
                 f.write(file.read())
+            # 写入当前 docs 目录内容到日志，便于确认是否上传成功
+            with open("upload_debug.txt", "w", encoding="utf-8") as logf:
+                logf.write("当前 docs 目录文件列表：\n")
+                logf.write("\n".join(os.listdir("docs")))
 
         script_map = {
             "学习周报": ("main_weekly.py", "weekly_report"),
@@ -34,7 +40,8 @@ if st.button("生成报告"):
 
         script, output_name = script_map[report_type]
 
-        subprocess.run(["python", script])
+        python_path = os.path.join(".venv", "Scripts", "python.exe")
+        subprocess.run([python_path, script])
 
         st.success("✅ 报告生成成功！请选择下载格式：")
         for ext in ["md", "docx", "pdf", "html"]:
@@ -42,3 +49,4 @@ if st.button("生成报告"):
             if os.path.exists(file_path):
                 with open(file_path, "rb") as f:
                     st.download_button(f"下载 {ext.upper()}", f, file_name=os.path.basename(file_path))
+                    st.write("当前 output 目录内容：", os.listdir("output"))

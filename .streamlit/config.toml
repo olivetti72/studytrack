@@ -1,0 +1,13 @@
+[server]
+headless = true
+port = 8501
+enableCORS = false
+
+[theme]
+base = "light"
+
+[client]
+showSidebarNavigation = false
+
+[general]
+pageTitle = "StudyTrack 学习报告助手"
