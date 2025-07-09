@@ -1,52 +1,82 @@
+# app.py
+
 import streamlit as st
-import os
+from datetime import date
+from pathlib import Path
 import shutil
-import subprocess
+import os
 
-st.set_page_config(page_title="StudyTrack 学习报告助手", layout="centered")
-st.title("StudyTrack 学习报告生成器")
+# 导入主逻辑函数
+from main_final import main as generate_final_report
+from main_course import main as generate_course_report
+from main_weekly import main as generate_weekly_report
 
-# 上传 Word 文档
-uploaded_files = st.file_uploader("上传 Word 学习文档（支持多个）", type=["docx"], accept_multiple_files=True)
+# 根目录
+BASE_DIR = Path(__file__).resolve().parent
+DOCS_DIR = BASE_DIR / "docs"
+OUTPUT_DIR = BASE_DIR / "output"
 
-# 功能选择
-report_type = st.selectbox("选择生成报告类型", ["学习周报", "课程分类总结", "期末总结报告"])
+st.set_page_config(page_title="StudyTrack 学习报告生成器", layout="centered")
 
-# 生成按钮
-if st.button("生成报告"):
-    if not uploaded_files:
-        st.warning("请先上传 Word 文档！")
-    else:
-        # 清空并保存 docs 目录
-        if os.path.exists("docs"):
-            shutil.rmtree("docs")
-        os.makedirs("docs")
+st.title("📘 StudyTrack 学习报告生成器")
 
-        for file in uploaded_files:
-            file_path = os.path.join("docs", file.name)
-            st.write(f"保存文件：{file_path}")
-            with open(file_path, "wb") as f:
-                f.write(file.read())
-            # 写入当前 docs 目录内容到日志，便于确认是否上传成功
-            with open("upload_debug.txt", "w", encoding="utf-8") as logf:
-                logf.write("当前 docs 目录文件列表：\n")
-                logf.write("\n".join(os.listdir("docs")))
+# --------------------------------------------
+# ⏱️ 时间范围 & 📓 学期名称输入
+# --------------------------------------------
 
-        script_map = {
-            "学习周报": ("main_weekly.py", "weekly_report"),
-            "课程分类总结": ("course_stats.py", "summary_30d"),
-            "期末总结报告": ("generate_final_report.py", "final_report"),
-        }
+st.subheader("🛠️ 参数设置")
 
-        script, output_name = script_map[report_type]
+with st.form("params_form"):
+    days = st.slider("选择统计时间范围（单位：天）", min_value=7, max_value=365, value=90, step=7)
+    semester = st.text_input("输入学期名称（用于报告标题）", value="2025春季学期")
+    submitted = st.form_submit_button("✅ 应用设置")
 
-        python_path = os.path.join(".venv", "Scripts", "python.exe")
-        subprocess.run([python_path, script])
+# --------------------------------------------
+# 📤 上传 Word 文档
+# --------------------------------------------
 
-        st.success("✅ 报告生成成功！请选择下载格式：")
-        for ext in ["md", "docx", "pdf", "html"]:
-            file_path = os.path.join("output", f"{output_name}.{ext}")
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as f:
-                    st.download_button(f"下载 {ext.upper()}", f, file_name=os.path.basename(file_path))
-                    st.write("当前 output 目录内容：", os.listdir("output"))
+st.subheader("📄 上传学习总结文档（Word）")
+
+uploaded_files = st.file_uploader("上传一个或多个 .docx 文件", type=["docx"], accept_multiple_files=True)
+
+if uploaded_files:
+    for file in uploaded_files:
+        save_path = DOCS_DIR / file.name
+        with open(save_path, "wb") as f:
+            f.write(file.read())
+    st.success(f"已成功上传 {len(uploaded_files)} 个文档。")
+
+# --------------------------------------------
+# 📊 生成按钮区域
+# --------------------------------------------
+
+st.subheader("📈 生成学习报告")
+
+col1, col2, col3 = st.columns(3)
+
+if col1.button("📘 生成期末总结报告"):
+    generate_final_report()
+    st.success("✅ 期末总结报告已生成")
+
+if col2.button("📚 生成课程总结报告"):
+    generate_course_report()
+    st.success("✅ 课程总结报告已生成")
+
+if col3.button("📝 生成学习周报"):
+    generate_weekly_report()
+    st.success("✅ 学习周报已生成")
+
+# --------------------------------------------
+# 📂 查看输出文件
+# --------------------------------------------
+
+st.subheader("📁 查看已生成报告")
+
+output_files = sorted(OUTPUT_DIR.glob("*.*"))
+
+if output_files:
+    for f in output_files:
+        st.markdown(f"📄 [{f.name}](./output/{f.name})")
+else:
+    st.info("尚未生成任何报告。")
+

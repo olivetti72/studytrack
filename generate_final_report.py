@@ -2,7 +2,7 @@
 
 import os
 import datetime
-from processors.extractor_study_legacy import extract_study_docs, extract_study_info
+from processors.weekly.extractor_study_legacy import extract_study_docs, extract_study_info
 from processors.exporter_final import (
     export_final_report_to_word,
     export_final_report_to_pdf,
