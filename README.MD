@@ -1,101 +1,82 @@
+📄 README.md 推荐内容（适配 v2.0.0）
+markdown
+复制
+编辑
+# 📘 StudyTrack 学习报告生成器
 
-# StudyTrack 学习报告生成器
-
-**StudyTrack** 是一个学生学习总结辅助工具，支持上传 Word 学习文档，自动生成学习周报、课程分类总结和期末总结报告，并可导出为 Markdown、Word、PDF 和 HTML 格式，适合在 Web 页面中使用。
-
----
-
-## 🔧 环境要求
-
-- Python 3.10 及以上
-- 推荐使用虚拟环境（如 `.venv`）
-
-此外，请确保安装以下外部工具（用于格式转换）：
-
-- [Pandoc](https://pandoc.org/installing.html)：支持 Markdown 转 Word/PDF/HTML
-- [wkhtmltopdf](https://wkhtmltopdf.org/downloads.html)：如启用 HTML 转 PDF 功能
+一个面向学生的自动化学习总结工具，支持生成学习周报、课程总结、期末复习总结，并导出为 Markdown / Word / PDF 格式。
 
 ---
 
-## ✨ 功能特点
+## ✨ 主要功能
 
-- 支持上传多个 `.docx` 格式的学习记录
-- 自动生成三类学习报告：
-  - 📆 学习周报
-  - 📚 课程分类总结（默认近 30 天）
-  - 📝 期末总结报告
-- 多格式导出：
-  - `.md`（Markdown）
-  - `.docx`（Word）
-  - `.pdf`（PDF）
-  - `.html`（网页）
-- 提供简洁直观的 Web 界面（基于 Streamlit）
+- 🗓️ **学习周报**：从近 7 天文档中提取内容，生成结构化报告；
+- 📚 **课程总结**：按课程分类提取内容，适用于阶段性复盘；
+- 📈 **期末总结**：提取课程内容生成表格式复习报告；
+- 🖨️ **支持导出**：可导出为 `.md` / `.docx` / `.pdf` 格式；
+- 💻 **双模式使用**：
+  - `CLI` 命令行运行（如 `python processors/weekly/reporter_weekly.py`）
+  - `Streamlit` 图形界面运行：`streamlit run app.py`
 
 ---
 
-## 🚀 使用方式
+## 📁 项目结构（v2.0.0）
+
+studytrack/
+├── app.py # Streamlit 图形界面入口
+├── config.py # 全局配置项（路径、时间窗口等）
+├── docs/ # ✅ 输入：原始学习文档目录
+├── output/ # ✅ 输出：生成的报告文件
+├── processors/
+│ ├── weekly/ # 学习周报逻辑
+│ │ └── reporter_weekly.py
+│ ├── course/ # 课程总结逻辑
+│ │ └── reporter_course.py
+│ ├── final/ # 分类期末总结逻辑
+│ │ └── reporter_final.py
+│ ├── shared/ # 通用模块（如导出器）
+│ └── exporter_common.py
+└── requirements.txt
+
+yaml
+复制
+编辑
+
+---
+
+## 🚀 快速开始
 
 ### 1. 安装依赖
 
-确保已激活虚拟环境后执行：
-
 ```bash
 pip install -r requirements.txt
-```
+你还需要安装 Pandoc 和 xelatex 以支持 Word/PDF 导出（推荐安装 TeX Live）。
 
-### 2. 启动 Streamlit 应用
-
-```bash
+2. 运行方式
+🖥️ CLI 模式（命令行）
+bash
+复制
+编辑
+python processors/weekly/reporter_weekly.py     # 生成周报
+python processors/course/reporter_course.py     # 生成课程总结
+python processors/final/reporter_final.py       # 生成期末总结
+🌐 Streamlit 图形界面
+bash
+复制
+编辑
 streamlit run app.py
-```
+✍️ 报告模板说明
+输入目录默认为 docs/，输出目录为 output/
 
-### 3. 使用步骤
+输入文件为 .docx，要求包含字段如课程名、学习内容、问题、心得等
 
-1. 上传 `.docx` 学习记录文件（可多选）
-2. 选择报告类型：
-   - 学习周报
-   - 课程分类总结
-   - 期末总结报告
-3. 点击 **生成报告**
-4. 下载需要的报告格式（`.md` / `.docx` / `.pdf` / `.html`）
+输出包括 Markdown（结构清晰）、Word（便于排版）、PDF（便于提交）
 
----
+📌 版本记录
+v2.0.0（当前）：
 
-## 📁 项目结构说明
+重构模块结构为 reporter_xxx.py 系列
 
-```
-studytrack/
-├── app.py                   # 主界面入口
-├── main_weekly.py           # 周报生成脚本
-├── course_stats.py          # 课程统计脚本
-├── generate_final_report.py # 期末报告脚本
-├── processors/              # 文档提取与处理模块
-├── templates/               # 报告模板（Markdown）
-├── docs/                    # 上传文档目录
-├── output/                  # 报告输出目录
-├── requirements.txt         # 项目依赖
-└── README.md                # 使用说明
-```
+Streamlit 界面整合统一入口
 
----
-
-## 🖼 示例界面（可选）
-
-若准备好截图，可如下插入：
-
-```markdown
-![界面示意图](docs/interface_screenshot.png)
-```
-
----
-
-## 开发者信息
-
-- 项目作者：刘胤廷
-- 联系方式：1827764696@qq.com
-
----
-
-## License
-
-本项目基于 BISTU License 开源，可自由使用、修改与分发。
+支持 CLI 和 GUI 双模式

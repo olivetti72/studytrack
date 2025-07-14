@@ -22,3 +22,11 @@ def extract_study_info(parsed_docs):
         if result["course"]:
             results.append(result)
     return results
+def convert_fields(item: dict) -> dict:
+    return {
+        "course": item.get("course", ""),
+        "学习内容": item.get("content", "").strip().splitlines() or ["无"],
+        "遇到的问题": item.get("problem", "").strip().splitlines() or ["无"],
+        "解决方案": item.get("solution", "").strip().splitlines() or ["无"],
+        "学习心得": item.get("reflection", "").strip().splitlines() or ["无"],
+    }

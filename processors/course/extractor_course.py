@@ -17,8 +17,8 @@ class CourseContent(TypedDict, total=False):
 CourseSummary = Dict[str, CourseContent]
 
 # --- 提取函数实现 ---
-def extract_course_summary(folder: Path, cutoff_days: int = 30) -> CourseSummary:
-    cutoff_date = datetime.now() - timedelta(days=cutoff_days)
+def extract_course_summary(folder: Path, days: int = 30) -> CourseSummary:
+    cutoff_date = datetime.now() - timedelta(days=days)
 
     stats = defaultdict(int)
     content_map = defaultdict(lambda: {

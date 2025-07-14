@@ -56,6 +56,7 @@ def extract_study_docs(input_dir, days=None, start_date=None, end_date=None):
                 path = os.path.join(input_dir, filename)
                 parsed = parse_docx(path)
                 if parsed:
+                    parsed["date"] = date  # ✅ 添加这一行
                     docs.append(parsed)
 
     print(f"[i] 提取到 {len(docs)} 篇学习记录")

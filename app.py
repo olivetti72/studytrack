@@ -1,82 +1,113 @@
-# app.py
-
 import streamlit as st
-from datetime import date
 from pathlib import Path
-import shutil
-import os
+from datetime import date
+from config import WEEKLY_CUTOFF_DAYS, COURSE_CUTOFF_DAYS, FINAL_CUTOFF_DAYS
 
-# 导入主逻辑函数
-from main_final import main as generate_final_report
-from main_course import main as generate_course_report
-from main_weekly import main as generate_weekly_report
+from processors.weekly.reporter_weekly import run_weekly_report
+from processors.course.reporter_course import run_course_report
+from processors.final.reporter_final import run_final_report
 
-# 根目录
-BASE_DIR = Path(__file__).resolve().parent
-DOCS_DIR = BASE_DIR / "docs"
-OUTPUT_DIR = BASE_DIR / "output"
-
-st.set_page_config(page_title="StudyTrack 学习报告生成器", layout="centered")
-
+st.set_page_config(page_title="📘 StudyTrack 学习报告生成器", layout="centered")
 st.title("📘 StudyTrack 学习报告生成器")
 
-# --------------------------------------------
-# ⏱️ 时间范围 & 📓 学期名称输入
-# --------------------------------------------
+# --- 📂 输入路径选择区 ---
+st.sidebar.header("📁 输入设置")
+def_path = Path("docs")
+input_dir = st.sidebar.text_input("输入学习文档目录：", value=str(def_path.resolve()))
+input_path = Path(input_dir)
+if not input_path.exists():
+    st.sidebar.error("❌ 目录不存在，请检查路径")
 
-st.subheader("🛠️ 参数设置")
+# --- 📄 报告类型选择区 ---
+st.sidebar.header("📄 报告类型")
+report_type = st.sidebar.radio("请选择要生成的报告：", ["学习周报", "课程总结", "期末总结"])
 
-with st.form("params_form"):
-    days = st.slider("选择统计时间范围（单位：天）", min_value=7, max_value=365, value=90, step=7)
-    semester = st.text_input("输入学期名称（用于报告标题）", value="2025春季学期")
-    submitted = st.form_submit_button("✅ 应用设置")
+# --- 📤 主内容区域 ---
+st.markdown("---")
+st.sidebar.info("📂 当前默认从 docs/ 目录中提取文档。\n请将学习文档放入该目录再点击生成。")
 
-# --------------------------------------------
-# 📤 上传 Word 文档
-# --------------------------------------------
+output_dir = Path("output")
+today_str = date.today().strftime("%Y-%m-%d")
 
-st.subheader("📄 上传学习总结文档（Word）")
+if report_type == "学习周报":
+    st.subheader("📅 学习周报")
+    st.markdown("提取过去 7 天的学习内容，生成 Markdown、Word 和 PDF 报告。")
 
-uploaded_files = st.file_uploader("上传一个或多个 .docx 文件", type=["docx"], accept_multiple_files=True)
+    if st.button("▶️ 生成学习周报"):
+        try:
+            run_weekly_report(
+                input_dir=input_path,
+                output_dir=output_dir,
+                days=WEEKLY_CUTOFF_DAYS
+            )
+            st.success("✅ 学习周报生成成功！")
+            md_file = output_dir / f"weekly_{today_str}.md"
+            pdf_file = output_dir / f"weekly_{today_str}.pdf"
 
-if uploaded_files:
-    for file in uploaded_files:
-        save_path = DOCS_DIR / file.name
-        with open(save_path, "wb") as f:
-            f.write(file.read())
-    st.success(f"已成功上传 {len(uploaded_files)} 个文档。")
+            if md_file.exists():
+                with open(md_file, "r", encoding="utf-8") as f:
+                    st.markdown("### 📝 报告预览")
+                    st.code(f.read(), language="markdown")
 
-# --------------------------------------------
-# 📊 生成按钮区域
-# --------------------------------------------
+            if pdf_file.exists():
+                with open(pdf_file, "rb") as f:
+                    st.download_button("📥 下载 PDF 文件", f, file_name=pdf_file.name)
 
-st.subheader("📈 生成学习报告")
+        except Exception as e:
+            st.error(f"❌ 周报生成失败：{e}")
 
-col1, col2, col3 = st.columns(3)
+elif report_type == "课程总结":
+    st.subheader("📚 分类课程总结")
+    st.markdown("统计每门课程的学习次数、问题与反思，适合阶段性复盘学习。")
 
-if col1.button("📘 生成期末总结报告"):
-    generate_final_report()
-    st.success("✅ 期末总结报告已生成")
+    if st.button("▶️ 生成课程总结报告"):
+        try:
+            run_course_report(
+                input_dir=input_path,
+                output_dir=output_dir,
+                days=COURSE_CUTOFF_DAYS
+            )
+            st.success("✅ 课程总结生成成功！")
+            md_file = output_dir / f"course_{today_str}.md"
+            pdf_file = output_dir / f"course_{today_str}.pdf"
 
-if col2.button("📚 生成课程总结报告"):
-    generate_course_report()
-    st.success("✅ 课程总结报告已生成")
+            if md_file.exists():
+                with open(md_file, "r", encoding="utf-8") as f:
+                    st.markdown("### 📝 报告预览")
+                    st.code(f.read(), language="markdown")
 
-if col3.button("📝 生成学习周报"):
-    generate_weekly_report()
-    st.success("✅ 学习周报已生成")
+            if pdf_file.exists():
+                with open(pdf_file, "rb") as f:
+                    st.download_button("📥 下载 PDF 文件", f, file_name=pdf_file.name)
 
-# --------------------------------------------
-# 📂 查看输出文件
-# --------------------------------------------
+        except Exception as e:
+            st.error(f"❌ 课程总结失败：{e}")
 
-st.subheader("📁 查看已生成报告")
+elif report_type == "期末总结":
+    st.subheader("📈 分类期末总结")
+    st.markdown("期末阶段总结每门课程内容，生成复习导图式表格报告。")
 
-output_files = sorted(OUTPUT_DIR.glob("*.*"))
+    if st.button("▶️ 生成期末总结报告"):
+        try:
+            run_final_report(
+                input_dir=input_path,
+                output_dir=output_dir,
+                days=FINAL_CUTOFF_DAYS
+            )
+            st.success("✅ 期末总结报告生成成功！")
+            md_file = output_dir / f"final_report.md"
+            pdf_file = output_dir / f"final_report.pdf"
 
-if output_files:
-    for f in output_files:
-        st.markdown(f"📄 [{f.name}](./output/{f.name})")
-else:
-    st.info("尚未生成任何报告。")
+            if md_file.exists():
+                with open(md_file, "r", encoding="utf-8") as f:
+                    st.markdown("### 📝 报告预览")
+                    st.code(f.read(), language="markdown")
+
+            if pdf_file.exists():
+                with open(pdf_file, "rb") as f:
+                    st.download_button("📥 下载 PDF 文件", f, file_name=pdf_file.name)
+
+        except Exception as e:
+            st.error(f"❌ 期末总结失败：{e}")
+
 

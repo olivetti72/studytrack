@@ -1,9 +1,6 @@
-streamlit>=1.32.0
-python-docx>=1.1.2
+## 📦 `requirements.txt` 推荐内容
+
+```txt
+python-docx>=0.8.11
+streamlit>=1.28.0
 pypandoc>=1.11
-fpdf>=1.7.2
-pdfkit>=1.0.0              # 如用 html 转 pdf
-pandas>=2.2.2              # 如处理表格
-jinja2>=3.1.3
-lxml>=5.4.0
-typing-extensions>=4.13.0
